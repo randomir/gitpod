@@ -288,9 +288,10 @@ export class UserService {
             log.debug('Cannot deauthorize. Authorization not found.', { userId: user.id, authProviderId });
             return;
         }
-
-        if (externalIdentities.length === 1) {
-            throw new Error("Cannot remove last provider authorization. Please delete account instead.");
+        const isBuiltin = (authProviderId: string) => !!this.hostContextProvider.findByAuthProviderId(authProviderId)?.authProvider?.params?.builtin;
+        const remainingLoginIdentities = externalIdentities.filter(i => i !== identity && (!this.config.disableDynamicAuthProviderLogin || isBuiltin(i.authProviderId)));
+        if (remainingLoginIdentities.length === 0) {
+            throw new Error("Cannot remove last authentication provider for logging in to Gitpod. Please delete account if you want to leave.");
         }
 
         // explicitly remove associated tokens

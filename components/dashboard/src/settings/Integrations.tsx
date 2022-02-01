@@ -43,6 +43,7 @@ function GitProviders() {
     const [disconnectModal, setDisconnectModal] = useState<{ provider: AuthProviderInfo } | undefined>(undefined);
     const [editModal, setEditModal] = useState<{ provider: AuthProviderInfo, prevScopes: Set<string>, nextScopes: Set<string> } | undefined>(undefined);
     const [selectAccountModal, setSelectAccountModal] = useState<SelectAccountPayload | undefined>(undefined);
+    const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
     useEffect(() => {
         updateAuthProviders();
@@ -138,6 +139,7 @@ function GitProviders() {
             updateUser();
         } catch (error) {
             console.log(`Failed to deauthorize for ${ap.host}`);
+            setErrorMessage(`This ${ap.host} integration is required for authentication and cannot be removed.`);
         }
     }
 
@@ -246,6 +248,13 @@ function GitProviders() {
                 onClose={() => setDisconnectModal(undefined)}
                 onConfirm={() => disconnect(disconnectModal.provider)}
             />
+        )}
+
+        {errorMessage && (
+            <div className="flex rounded-md bg-red-600 p-3">
+                <img className="w-4 h-4 mx-2 my-auto filter-brightness-10" src={exclamation} />
+                <span className="text-white">{errorMessage}</span>
+            </div>
         )}
 
         {editModal && (
