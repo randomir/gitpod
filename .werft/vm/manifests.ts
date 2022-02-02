@@ -211,6 +211,7 @@ write_files:
 
       cat <<EOF >> /root/.bashrc
       export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+      source <(kubectl completion bash)
       EOF
 runcmd:
  - bash /usr/local/bin/bootstrap-k3s.sh`).toString("base64")
