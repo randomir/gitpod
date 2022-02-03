@@ -2,7 +2,7 @@ module github.com/gitpod-io/gitpod/workspacekit
 
 go 1.17
 
-replace github.com/seccomp/libseccomp-golang => github.com/utam0k/libseccomp-golang v0.9.2-0.20220203005200-4c0e41c97196
+replace github.com/seccomp/libseccomp-golang => github.com/utam0k/libseccomp-golang v0.9.2-0.20220203044833-9e4d5d49b174
 
 require (
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
