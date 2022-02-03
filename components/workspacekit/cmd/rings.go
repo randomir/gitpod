@@ -752,9 +752,9 @@ var ring2Cmd = &cobra.Command{
 
 		// Now that we're in our new root filesystem, including proc and all, we can load
 		// our seccomp filter, and tell our parent about it.
-		runtime.LockOSThread()
+		// runtime.LockOSThread()
 		scmpFd, err := seccomp.LoadFilter()
-		runtime.UnlockOSThread()
+		// runtime.UnlockOSThread()
 		if err != nil {
 			log.WithError(err).Error("cannot load seccomp filter - syscall handling would be broken")
 			return

@@ -86,9 +86,7 @@ func LoadFilter() (libseccomp.ScmpFd, error) {
 			return 0, xerrors.Errorf("unknown syscall %s: %w", sc, err)
 		}
 		err = filter.AddRuleExact(syscallID, libseccomp.ActNotify)
-		if err.Error() == "two checks on same syscall argument" {
-			log.Errorf(fmt.Sprintf("ignore error rule for %s: %s", sc, err.Error()))
-		} else if err != nil {
+		if err != nil {
 			return 0, xerrors.Errorf("cannot add rule for %s: %w", sc, err)
 		}
 	}
