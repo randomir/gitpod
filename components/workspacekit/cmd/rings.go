@@ -686,7 +686,7 @@ func receiveSeccmpFd(conn *net.UnixConn) (libseccomp.ScmpFd, error) {
 
 	msgs, err := unix.ParseSocketControlMessage(buf)
 	if err != nil {
-		return 0, xerrors.Errorf("cannot parse socket control message: %v", err)
+		return 0, xerrors.Errorf("cannot parse socket control message: %v, buf: %v", err, buf)
 	}
 	if len(msgs) != 1 {
 		return 0, xerrors.Errorf("expected a single socket control message")
