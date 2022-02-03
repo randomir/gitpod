@@ -279,10 +279,18 @@ func syscallMoveMount(fromDirFD int, fromPath string, toDirFD int, toPath string
 		return err
 	}
 
+	if _, err := os.Stat(toPath); os.IsNotExist(err) {
+		if err := os.MkdirAll(toPath, 0777); err != nil {
+			log.Infof("failed to create directory %s", toPath)
+		}
+	}
+
+	log.Infof("fromPath: %s, toPath: %s", fromPath, toPath)
 	_, _, errno := unix.Syscall6(unix.SYS_MOVE_MOUNT, uintptr(fromDirFD), uintptr(unsafe.Pointer(fromPathP)), uintptr(toDirFD), uintptr(unsafe.Pointer(toPathP)), flags, 0)
 	if errno != 0 {
 		return errno
 	}
+	log.Infof("performed mount without error")
 
 	return nil
 }
