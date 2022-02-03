@@ -1,0 +1,14 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+---
+- name: remove instance
+  google.cloud.gcp_compute_instance:
+    name: "{{ node_prefix }}--node-{{ item }}"
+    zone: "{{ gcp.zone }}"
+    project: "{{ gcp.project }}"
+    auth_kind: serviceaccount
+    service_account_contents: "{{ gcp.cred_content }}"
+    state: absent
+  loop: "{{ range(0, nodes_count) | list }}"

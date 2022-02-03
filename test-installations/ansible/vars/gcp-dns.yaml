@@ -1,0 +1,10 @@
+# Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+---
+gcp:
+  project: dns-for-playgrounds
+  cred_content: "{{ lookup('file', '/service-account.json') }}"
+  domain_zone_name: gitpod-self-hosted-com
+  domain_zone_dnsname: gitpod-self-hosted.com.
