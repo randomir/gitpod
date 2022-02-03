@@ -1006,6 +1006,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         // Example repositories
         promises.push(this.getFeaturedRepositories(ctx).then(exampleRepos => {
+            log.info(logCtx, 'Got example repositories: ' + JSON.stringify(exampleRepos, null, 2));
             exampleRepos.forEach(r => suggestions.push(r.url));
         }).catch(error => {
             log.error(logCtx, 'Could not get example repositories', error);
@@ -1015,9 +1016,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         promises.push(this.getAuthProviders(ctx).then(authProviders => Promise.all(authProviders.map(async (p) => {
             try {
                 const userRepos = await this.getProviderRepositoriesForUser(ctx, { provider: p.host });
+                log.info(logCtx, 'Got user repositories from App for ' + p.host + ': ' + JSON.stringify(userRepos, null, 2));
                 userRepos.forEach(r => suggestions.push(r.cloneUrl.replace(/\.git$/, '')));
             } catch (error) {
-                log.debug(logCtx, 'Could not get user repositories from App for ' + p.host, error);
+                log.info(logCtx, 'Could not get user repositories from App for ' + p.host, error);
             }
         }))).catch(error => {
             log.error(logCtx, 'Could not get auth providers', error);
@@ -1033,9 +1035,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                     return;
                 }
                 const userRepos = await services.repositoryProvider.getUserRepos(user);
+                log.info(logCtx, 'Got user repositories from host ' + p.host + ': ' + JSON.stringify(userRepos, null, 2));
                 userRepos.forEach(r => suggestions.push(r.replace(/\.git$/, '')));
             } catch (error) {
-                log.debug(logCtx, 'Could not get user repositories from host ' + p.host, error);
+                log.info(logCtx, 'Could not get user repositories from host ' + p.host, error);
             }
         }))).catch(error => {
             log.error(logCtx, 'Could not get auth providers', error);
@@ -1054,6 +1057,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }));
 
         await Promise.allSettled(promises);
+        log.info('returning ' + suggestions.length + ' suggestions');
 
         const uniqueURLs = new Set();
         return suggestions
