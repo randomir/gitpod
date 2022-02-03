@@ -36,8 +36,8 @@ type SyscallHandler interface {
 
 func mapHandler(h SyscallHandler) map[string]syscallHandler {
 	return map[string]syscallHandler{
-		"mount":   h.Mount,
-		"umount":  h.Umount,
+		"mount": h.Mount,
+		// "umount":  h.Umount,
 		"umount2": h.Umount,
 		"bind":    h.Bind,
 		"chown":   h.Chown,
@@ -85,21 +85,28 @@ func LoadFilter() (libseccomp.ScmpFd, error) {
 		if err != nil {
 			return 0, xerrors.Errorf("unknown syscall %s: %w", sc, err)
 		}
+		log.Errorf(fmt.Sprintf("apply%s", sc))
 		err = filter.AddRuleExact(syscallID, libseccomp.ActNotify)
 		if err != nil {
 			return 0, xerrors.Errorf("cannot add rule for %s: %w", sc, err)
 		}
+		log.Errorf(fmt.Sprintf("applied  %s", sc))
 	}
+	log.Errorf("all systeam calls registered")
 
+	log.Errorf("start filter load")
 	err = filter.Load()
 	if err != nil {
 		return 0, xerrors.Errorf("cannot load filter: %w", err)
 	}
+	log.Errorf("finish filter load")
 
+	log.Errorf("start get notifFd")
 	fd, err := filter.GetNotifFd()
 	if err != nil {
 		return 0, xerrors.Errorf("cannot get inotif fd: %w", err)
 	}
+	log.Errorf("finish get notifFd")
 
 	return fd, nil
 }
