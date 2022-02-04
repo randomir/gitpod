@@ -314,6 +314,10 @@ components:
         inWorkspaceUserAction:
           points: 10
           durationsSec: 2
+        startWorkspace:
+          # TODO(gpl) We should handle rate-limiter errors nicely on the dashboard so we can further reduce this without harming users
+          points: 4
+          durationsSec: 10
       functions:
         openPort:
           group: inWorkspaceUserAction
@@ -323,6 +327,9 @@ components:
           group: inWorkspaceUserAction
         shareSnapshot:
           group: inWorkspaceUserAction
+        startWorkspace:
+          group: startWorkspace
+          points: 1
     contentServiceAddr: "content-service:8080"
     imageBuilderAddr: "image-builder-mk3:8080"
     codeSync: {}

@@ -84,12 +84,17 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Points:       10,
 					DurationsSec: 2,
 				},
+				"startWorkspace": {
+					Points:       4,
+					DurationsSec: 10,
+				},
 			},
 			Functions: map[string]FunctionsConfig{
 				"openPort":         {Group: "inWorkspaceUserAction"},
 				"closePort":        {Group: "inWorkspaceUserAction"},
 				"controlAdmission": {Group: "inWorkspaceUserAction"},
 				"shareSnapshot":    {Group: "inWorkspaceUserAction"},
+				"startWorkspace":   {Group: "startWorkspace"},
 			},
 		},
 		ContentServiceAddr:           "content-service:8080",
