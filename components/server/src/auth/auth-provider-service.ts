@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { oauthUrls as githubUrls } from "../github/github-urls";
 import { oauthUrls as gitlabUrls } from "../gitlab/gitlab-urls";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { createHash } from "crypto";
 
 @injectable()
 export class AuthProviderService {
@@ -26,8 +27,8 @@ export class AuthProviderService {
     /**
      * Returns all auth providers.
      */
-    async getAllAuthProviders(): Promise<AuthProviderParams[]> {
-        const all = await this.authProviderDB.findAll();
+    async getAllAuthProviders(exceptOAuthRevisions: string[] = []): Promise<AuthProviderParams[]> {
+        const all = await this.authProviderDB.findAll(exceptOAuthRevisions);
         const transformed = all.map(this.toAuthProviderParams.bind(this));
 
         // as a precaution, let's remove duplicates
@@ -41,6 +42,10 @@ export class AuthProviderService {
             unique.set(current.host, current);
         }
         return Array.from(unique.values());
+    }
+
+    async getAllAuthProviderHosts(): Promise<string[]> {
+        return this.authProviderDB.findAllHosts();
     }
 
     protected toAuthProviderParams = (oap: AuthProviderEntry) => <AuthProviderParams>{
@@ -82,13 +87,16 @@ export class AuthProviderService {
             }
 
             // update config on demand
+            const oauth = {
+                ...existing.oauth,
+                clientId: entry.clientId,
+                clientSecret: entry.clientSecret || existing.oauth.clientSecret, // FE may send empty ("") if not changed
+            };
+            const oauthRevision = this.oauthContentHash(oauth);
             authProvider = {
                 ...existing,
-                oauth: {
-                    ...existing.oauth,
-                    clientId: entry.clientId,
-                    clientSecret: entry.clientSecret || existing.oauth.clientSecret, // FE may send empty ("") if not changed
-                },
+                oauth,
+                oauthRevision,
                 status: "pending",
             }
         } else {
@@ -106,18 +114,25 @@ export class AuthProviderService {
         if (!urls) {
             throw new Error("Unexpected service type.");
         }
-        return <AuthProviderEntry>{
+        const oauth: AuthProviderEntry["oauth"] = {
+            ...urls,
+            callBackUrl: this.callbackUrl(host),
+            clientId: clientId!,
+            clientSecret: clientSecret!,
+        };
+        const oauthRevision = this.oauthContentHash(oauth);
+        return {
             ...newEntry,
             id: uuidv4(),
             type,
-            oauth: {
-                ...urls,
-                callBackUrl: this.callbackUrl(host),
-                clientId,
-                clientSecret,
-            },
+            oauth,
+            oauthRevision,
             status: "pending",
         };
+    }
+
+    protected oauthContentHash(oauth: AuthProviderEntry["oauth"]): string {
+        return createHash('sha256').update(JSON.stringify(oauth)).digest('hex');
     }
 
     async markAsVerified(params: { ownerId: string; id: string }) {
