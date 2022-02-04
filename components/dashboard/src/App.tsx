@@ -288,8 +288,8 @@ function App() {
 
                 <Route path="/admin/users" component={UserSearch} />
                 <Route path="/admin/workspaces" component={WorkspacesSearch} />
-                <Route path="/admin/settings" component={AdminSettings} />
                 <Route path="/admin/projects" component={ProjectsSearch} />
+                <Route path="/admin/settings" component={AdminSettings} />
 
                 <Route path={["/", "/login"]} exact>
                     <Redirect to={workspacesPathMain} />
@@ -316,6 +316,9 @@ function App() {
                     <Route exact path={projectsPathMain} component={Projects} />
                     <Route exact path={projectsPathMainWithParams} render={(props) => {
                         const { resourceOrPrebuild } = props.match.params;
+                        if (resourceOrPrebuild === "prebuilds") {
+                            return <Prebuilds />;
+                        }
                         if (resourceOrPrebuild === "settings") {
                             return <ProjectSettings />;
                         }
@@ -324,9 +327,6 @@ function App() {
                         }
                         if (resourceOrPrebuild === "variables") {
                             return <ProjectVariables />;
-                        }
-                        if (resourceOrPrebuild === "prebuilds") {
-                            return <Prebuilds />;
                         }
                         return resourceOrPrebuild ? <Prebuild /> : <Project />;
                     }} />
@@ -355,6 +355,9 @@ function App() {
                             if (maybeProject === "settings") {
                                 return <TeamSettings />;
                             }
+                            if (resourceOrPrebuild === "prebuilds") {
+                                return <Prebuilds />;
+                            }
                             if (resourceOrPrebuild === "settings") {
                                 return <ProjectSettings />;
                             }
@@ -363,9 +366,6 @@ function App() {
                             }
                             if (resourceOrPrebuild === "variables") {
                                 return <ProjectVariables />;
-                            }
-                            if (resourceOrPrebuild === "prebuilds") {
-                                return <Prebuilds />;
                             }
                             return resourceOrPrebuild ? <Prebuild /> : <Project />;
                         }} />
