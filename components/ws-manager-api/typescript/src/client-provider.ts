@@ -5,7 +5,7 @@
  */
 
 import { createClientCallMetricsInterceptor, IClientCallMetrics } from "@gitpod/content-service/lib/client-call-metrics";
-import { Disposable, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { Disposable, RolesOrPermissions, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { defaultGRPCOptions } from '@gitpod/gitpod-protocol/lib/util/grpc';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { WorkspaceClusterWoTLS, WorkspaceManagerConnectionInfo } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
@@ -46,11 +46,14 @@ export class WorkspaceManagerClientProvider implements Disposable {
         const availableClusters = allClusters.filter(c => c.score > 0 && c.state === "available");
 
         const sets = workspaceClusterSets.map(constraints => {
-            const r = constraints.constraint(availableClusters, user, workspace, instance);
-            if (!r) {
-                return;
+            // filter the clusters we'd like to have in this set (to establish precedence)
+            let clusters = constraints.constraint(availableClusters, user, workspace, instance);
+            // filter out the clusters we are allowed to access
+            clusters = constraintMayAccessCluster(clusters, user, workspace, instance);
+            if (!clusters) {
+                return undefined;
             }
-            return new ClusterSet(this, r);
+            return new ClusterSet(this, clusters);
         }).filter(s => s !== undefined) as ClusterSet[];
 
         return {
@@ -206,4 +209,22 @@ function chooseCluster(availableCluster: WorkspaceClusterWoTLS[]): WorkspaceClus
         }
     }
     return availableCluster[availableCluster.length - 1];
+}
+
+function constraintMayAccessCluster(all: WorkspaceClusterWoTLS[], user: ExtendedUser, workspace: Workspace, instance: WorkspaceInstance): WorkspaceClusterWoTLS[] {
+    return all.filter(cluster => userMayAccessCluster(cluster, user));
+}
+
+function userMayAccessCluster(cluster: WorkspaceClusterWoTLS, user: ExtendedUser): boolean {
+    const userPermissions = RolesOrPermissions.toPermissionSet(user.rolesOrPermissions);
+    return (cluster.admissionConstraints || []).every(c => {
+        switch (c.type) {
+            case "has-more-resources":
+                return !!user.getsMoreResources;
+            case "has-permission":
+                return userPermissions.has(c.permission);
+            default:
+                return true;    // no reason to exclude user
+        }
+    })
 }
