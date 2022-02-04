@@ -60,16 +60,16 @@ func (h *WorkspaceHistory) Throttled() bool {
 }
 
 type DistributorSource func(context.Context) ([]Workspace, error)
-type DistributorSink func(workspaceID string, limit Bandwidth)
+type DistributorSink func(id string, limit Bandwidth, burst bool)
 
-func NewDistributor(source DistributorSource, sink DistributorSink, limiter ResourceLimiter, breakoutLimiter ResourceLimiter, totalBandwidth Bandwidth) *Distributor {
+func NewDistributor(source DistributorSource, sink DistributorSink, limiter ResourceLimiter, burstLimiter ResourceLimiter, totalBandwidth Bandwidth) *Distributor {
 	return &Distributor{
-		Source:          source,
-		Sink:            sink,
-		Limiter:         limiter,
-		BreakoutLimiter: breakoutLimiter,
-		TotalBandwidth:  totalBandwidth,
-		History:         make(map[string]*WorkspaceHistory),
+		Source:         source,
+		Sink:           sink,
+		Limiter:        limiter,
+		BurstLimiter:   burstLimiter,
+		TotalBandwidth: totalBandwidth,
+		History:        make(map[string]*WorkspaceHistory),
 	}
 }
 
@@ -77,9 +77,9 @@ type Distributor struct {
 	Source DistributorSource
 	Sink   DistributorSink
 
-	History         map[string]*WorkspaceHistory
-	Limiter         ResourceLimiter
-	BreakoutLimiter ResourceLimiter
+	History      map[string]*WorkspaceHistory
+	Limiter      ResourceLimiter
+	BurstLimiter ResourceLimiter
 
 	// TotalBandwidth is the total CPU time available in nanoseconds per second
 	TotalBandwidth Bandwidth
@@ -90,7 +90,7 @@ type Distributor struct {
 }
 
 type DistributorDebug struct {
-	BandwidthAvail, BandwidthUsed, BandwidthBreakout Bandwidth
+	BandwidthAvail, BandwidthUsed, BandwidthBurst Bandwidth
 }
 
 // Run starts a ticker which repeatedly calls Tick until the context is canceled.
@@ -175,7 +175,7 @@ func (d *Distributor) Tick(dt time.Duration) (DistributorDebug, error) {
 	d.LastTickUsage = totalUsage
 
 	// enforce limits
-	var breakoutBandwidth Bandwidth
+	var burstBandwidth Bandwidth
 	for _, id := range wsOrder {
 		ws := d.History[id]
 		limit := d.Limiter.Limit(ws.Usage())
@@ -184,24 +184,25 @@ func (d *Distributor) Tick(dt time.Duration) (DistributorDebug, error) {
 		// and there's still some bandwidth left to give, let's act as if had
 		// never spent any CPU time and assume the workspace will spend their
 		// entire bandwidth at once.
+		var burst bool
 		if totalBandwidth < d.TotalBandwidth && ws.Throttled() {
-			limit = d.BreakoutLimiter.Limit(ws.Usage())
+			limit = d.BurstLimiter.Limit(ws.Usage())
 
 			// We assume the workspace is going to use as much as their limit allows.
 			// This might not be true, because their process which consumed so much CPU
 			// may have ended by now.
 			totalBandwidth += limit
 
-			breakoutBandwidth += limit
+			burstBandwidth += limit
 		}
 
-		d.Sink(id, limit)
+		d.Sink(id, limit, burst)
 	}
 
 	return DistributorDebug{
-		BandwidthAvail:    d.TotalBandwidth,
-		BandwidthUsed:     totalBandwidth,
-		BandwidthBreakout: breakoutBandwidth,
+		BandwidthAvail: d.TotalBandwidth,
+		BandwidthUsed:  totalBandwidth,
+		BandwidthBurst: burstBandwidth,
 	}, nil
 }
 
