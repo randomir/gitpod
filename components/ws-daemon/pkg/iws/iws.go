@@ -355,7 +355,7 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 
 	_, err = os.Stat(req.Target)
 	if os.IsNotExist(err) {
-		log.Errorf(fmt.Sprintf("try create %s", req.Target))
+		log.Errorf(fmt.Sprintf("try create %s in MountProc", req.Target))
 		err = os.MkdirAll(req.Target, 0755)
 		if err != nil {
 			return nil, err
@@ -579,6 +579,15 @@ func (wbs *InWorkspaceServiceServer) MountSysfs(ctx context.Context, req *api.Mo
 		err = maskPath(filepath.Join(nodeStaging, mask))
 		if err != nil {
 			return nil, xerrors.Errorf("cannot mask %s: %w", mask, err)
+		}
+	}
+
+	_, err = os.Stat(req.Target)
+	if os.IsNotExist(err) {
+		log.Errorf(fmt.Sprintf("try create %s in MountSysFs()", req.Target))
+		err = os.MkdirAll(req.Target, 0755)
+		if err != nil {
+			return nil, err
 		}
 	}
 
