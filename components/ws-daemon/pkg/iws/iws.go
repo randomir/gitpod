@@ -353,6 +353,15 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 		}
 	}
 
+	_, err = os.Stat(req.Target)
+	if os.IsNotExist(err) {
+		log.Errorf(fmt.Sprintf("try create %s", req.Target))
+		err = os.MkdirAll(req.Target, 0755)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	err = moveMount(wbs.Session.InstanceID, int(procPID), nodeStaging, req.Target)
 	if err != nil {
 		return nil, err
