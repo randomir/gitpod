@@ -245,7 +245,6 @@ func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, er
 	}).Debug("handling mount syscall")
 
 	if filesystem == "proc" || filesystem == "sysfs" {
-		time.Sleep(3 * time.Second)
 		// When a process wants to mount proc relative to `/proc/self` that path has no meaning outside of the processes' context.
 		// runc started doing this in https://github.com/opencontainers/runc/commit/0ca91f44f1664da834bc61115a849b56d22f595f
 		// TODO(cw): there must be a better way to handle this. Find one.
