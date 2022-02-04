@@ -107,6 +107,9 @@ export class Werft {
     }
 
     public endAllSpans() {
+        const traceID = this.rootSpan.spanContext().traceId
+        const spanID = this.rootSpan.spanContext().spanId
+        exec(`werft log result -d "Honeycomb trace" -c github-check-honeycomb-trace url https://ui.honeycomb.io/gitpod/datasets/werft/trace/${traceID}?span=${spanID}`);
         this.endPhase()
         this.rootSpan.end()
     }
