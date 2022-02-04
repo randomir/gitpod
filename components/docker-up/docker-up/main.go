@@ -91,7 +91,6 @@ func runWithinNetns() (err error) {
 		"--experimental",
 		"--rootless",
 		"--data-root=/workspace/.docker-root",
-		"--storage-driver=fuse-overlayfs",
 	}
 	if opts.Verbose {
 		args = append(args,
